@@ -80,46 +80,86 @@ goal = st.text_input(
 # Matching Function
 # -------------------------
 
-def match_opportunities(city, education, skills):
+# ==============================
+# Matching Function
+# ==============================
 
-    results = opportunities.copy()
+def match_opportunities(city, education, skills, goal, df, top_n=5):
 
-    text = (
-        city + " " +
-        education + " " +
-        skills
-    ).lower()
+    # Convert user inputs to lowercase
+    city = str(city).lower()
+    education = str(education).lower()
+    skills = str(skills).lower()
+    goal = str(goal).lower()
 
-    results["match_score"] = 0
+    matched_results = []
 
+    # Loop through opportunities
+    for index, row in df.iterrows():
 
-   for index, row in results.iterrows():
-
-    row_text = " ".join(
-        [str(value) for value in row.values]
-    ).lower()
-
-    # continue your matching logic below
-
+        # Combine all opportunity information into one text
+        row_text = " ".join(
+            [str(value) for value in row.values]
+        ).lower()
 
         score = 0
+        reasons = []
 
-        for word in text.split():
+        # Location matching
+        if city in row_text or "all" in row_text:
+            score += 3
+            reasons.append("Location suitable")
 
+        # Education matching
+        if education in row_text:
+            score += 3
+            reasons.append("Education requirement matches")
+
+        # Skill matching
+        skill_words = skills.replace(",", " ").split()
+
+        for skill in skill_words:
+            if skill in row_text:
+                score += 2
+                reasons.append("Skill matches")
+
+        # Goal/category matching
+        goal_words = goal.replace(",", " ").split()
+
+        for word in goal_words:
             if word in row_text:
                 score += 1
+                reasons.append("Goal matches")
 
+        # Add only relevant opportunities
+        if score > 0:
 
-        results.loc[index, "match_score"] = score
+            result = row.to_dict()
 
+            result["match_score"] = score
 
-    return results.sort_values(
-        "match_score",
-        ascending=False
-    ).head(3)
+            # Remove duplicate reasons
+            result["match_reason"] = ", ".join(
+                list(dict.fromkeys(reasons))
+            )
 
+            matched_results.append(result)
 
+    # Convert results to dataframe
+    if matched_results:
 
+        matched_df = pd.DataFrame(matched_results)
+
+        # Sort highest matching score first
+        matched_df = matched_df.sort_values(
+            by="match_score",
+            ascending=False
+        )
+
+        return matched_df.head(top_n)
+
+    else:
+        return pd.DataFrame()
 # -------------------------
 # Generate AI Response
 # -------------------------
