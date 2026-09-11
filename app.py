@@ -93,11 +93,13 @@ def match_opportunities(city, education, skills):
     results["match_score"] = 0
 
 
-    for index, row in results.iterrows():
+   for index, row in results.iterrows():
 
-        row_text = " ".join(
-            row.astype(str)
-        ).lower()
+    row_text = " ".join(
+        [str(value) for value in row.values]
+    ).lower()
+
+    # continue your matching logic below
 
 
         score = 0
